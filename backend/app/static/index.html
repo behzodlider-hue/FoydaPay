@@ -92,8 +92,20 @@ let SID = null;
 const $ = id => document.getElementById(id);
 function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function scroll(){ $('chat').scrollTop = $('chat').scrollHeight; }
+// Minimal, safe Markdown for model replies: **bold** and "* " / "- " bullets. Text is never parsed as HTML.
+function richText(target, text){
+  text.split('\n').forEach((line, i) => {
+    if (i) target.appendChild(document.createTextNode('\n'));
+    line = line.replace(/^(\s*)[*-]\s+/, '$1• ').replace(/`/g, '');
+    line.split(/(\*\*[^*]+\*\*)/g).forEach(part => {
+      if (/^\*\*[^*]+\*\*$/.test(part)) target.appendChild(el('b', null, part.slice(2, -2)));
+      else if (part) target.appendChild(document.createTextNode(part.replace(/\*\*/g, '')));
+    });
+  });
+}
 function addMsg(who, text, mode){
-  const m = el('div', 'msg ' + who, text);
+  const m = el('div', 'msg ' + who);
+  if (who === 'agent') richText(m, text); else m.textContent = text;
   if (mode && mode !== 'llm') m.appendChild(el('span', 'mode', mode === 'confirmation' ? 'confirmation' : 'rules engine'));
   $('chat').appendChild(m); scroll();
 }
