@@ -4,6 +4,8 @@ services:
     name: foydapay
     runtime: docker
     plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /healthz
     envVars:
       - key: FOYDAPAY_PROVIDER
