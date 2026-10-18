@@ -1,7 +1,7 @@
 # FoydaPay — Technical Documentation
 
 **Team:** Capital Guardians (Uzbekistan) · **Track:** International AI Track, Topic A — Personal Finance Assistant
-**Live demo:** `<RENDER URL>` · **Source code:** `<GITHUB URL>`
+**Live demo:** https://foydapay.onrender.com · **Source code:** https://github.com/behzodlider-hue/FoydaPay
 
 ## 1. Problem and user
 
