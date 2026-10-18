@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FoydaPay B2C - Business Model Canvas</title>
+<style>
+  body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #F3F6F5; padding: 20px; color: #14231F; margin: 0; }
+  .canvas-wrapper { max-width: 1300px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+  .header-title { text-align: center; color: #0B2E44; margin-bottom: 6px; font-size: 28px; font-weight: bold; }
+  .header-sub { text-align: center; color: #56665F; margin-bottom: 25px; font-size: 15px; }
+  .grid-top { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .grid-bottom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .box { border: 1px solid #D3DDD9; border-radius: 8px; padding: 18px; background: #FAFCFB; }
+  .box-split { display: grid; grid-template-rows: auto auto; gap: 12px; }
+  .box-inner { border: 1px solid #D3DDD9; border-radius: 8px; padding: 18px; background: #FAFCFB; }
+  .title { color: #2F6FB0; font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; }
+  ul { margin: 0; padding-left: 18px; font-size: 15px; line-height: 1.5; color: #333; }
+  li { margin-bottom: 10px; }
+  .new { background: #E3EEE9; color: #17775A; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; white-space: nowrap; }
+  .levers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .lever { border-radius: 8px; padding: 14px 16px; background: #0B2E44; color: #fff; }
+  .lever b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .lever span { font-size: 14px; opacity: .85; }
+  .lever.guard { background: #8E1B22; }
+  .note { font-size: 13px; color: #56665F; margin-top: 14px; }
+  @media (max-width: 900px) {
+    .grid-top, .grid-bottom, .levers { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas-wrapper">
+  <div class="header-title">Business Model Canvas: FoydaPay</div>
+  <div class="header-sub">Debt-rescue agent: найти деньги на платёж тремя путями и не дать мошенникам добить заёмщика</div>
+
+  <div class="levers">
+    <div class="lever"><b>1. Сократить</b><span>Анализ трат и счетов: подписки, доставка, лишние платежи.</span></div>
+    <div class="lever"><b>2. Заработать</b><span>Проверенная подработка под дефицит, график и навыки.</span></div>
+    <div class="lever"><b>3. Договориться</b><span>Запрос на реструктуризацию в банк, подготовленный агентом.</span></div>
+  </div>
+  <div class="levers" style="grid-template-columns:1fr">
+    <div class="lever guard"><b>Защита (через все три пути)</b><span>Блок фальшивых «коллекторов», вакансий с предоплатой и навязанных микрозаймов «чтобы закрыть старый кредит». Все платежи только после подтверждения.</span></div>
+  </div>
+
+  <div class="grid-top">
+    <div class="box">
+      <div class="title">8. Key Partners (Партнёры)</div>
+      <ul>
+        <li><b>Банки и МФО:</b> пилот на портфеле проблемных кредитов, приём запросов на реструктуризацию.</li>
+        <li><b>Gig-платформы и биржи</b> (Yandex, Uzum, фриланс-биржи): каталог смен. <i>Договорённостей пока нет, в демо — пример.</i></li>
+        <li><b>ЦБ РУз и НКО по финграмотности:</b> потенциальные партнёры по просвещению. <i>Не заявляем поддержку, пока её нет.</i></li>
+      </ul>
+    </div>
+
+    <div class="box-split">
+      <div class="box-inner">
+        <div class="title">7. Key Activities (Деятельность)</div>
+        <ul>
+          <li>Разработка AI-агента: диалог, инструменты, планирование.</li>
+          <li>Policy guard: уровни прав, подтверждения, антифрод-правила <span class="new">новое</span></li>
+          <li>Проверка вакансий (нет предоплаты, реальный работодатель) <span class="new">новое</span></li>
+          <li>Актуализация правил (лимит нагрузки 50% дохода) и шаблонов запросов.</li>
+          <li>B2B-продажи банкам.</li>
+        </ul>
+      </div>
+      <div class="box-inner">
+        <div class="title">6. Key Resources (Ресурсы)</div>
+        <ul>
+          <li>Агент + policy guard + журнал действий (audit log).</li>
+          <li>Модель риска просрочки (интерпретируемая).</li>
+          <li>Каталог проверенных подработок.</li>
+          <li>API-интеграции с банками и платформами (в MVP — sandbox).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="title">2. Value Propositions (Ценность)</div>
+      <ul>
+        <li><b>Для заёмщика:</b> понятный план «сократить + заработать + договориться» с точными суммами; агент делает шаги сам, но только с согласия.</li>
+        <li><b>Защита:</b> агент не даёт перевести деньги мошенникам и взять новый кредит на погашение старого <span class="new">новое</span></li>
+        <li><b>Помощник по реструктуризации:</b> готовит запрос в банк. <i>Не юридическая консультация.</i></li>
+        <li><b>Для банков:</b> меньше просрочек (NPL), клиент возвращается в график, меньше жалоб на мошенничество.</li>
+        <li><b>Для gig-платформ:</b> работники с высокой мотивацией.</li>
+      </ul>
+    </div>
+
+    <div class="box-split">
+      <div class="box-inner">
+        <div class="title">4. Relationships (Отношения)</div>
+        <ul>
+          <li><b>Персональный ассистент:</b> спокойный тон, без стыда и давления.</li>
+          <li><b>Автоматизация по согласию:</b> заработок с подработки идёт в погашение только после явного «да»; правило можно отменить в любой момент.</li>
+        </ul>
+      </div>
+      <div class="box-inner">
+        <div class="title">3. Channels (Каналы)</div>
+        <ul>
+          <li>Telegram-бот / мобильное приложение (UZ, RU, EN).</li>
+          <li>Банк предлагает FoydaPay клиентам в зоне риска.</li>
+          <li>Образовательный контент о долгах в соцсетях.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="title">1. Customer Segments (Сегменты)</div>
+      <ul>
+        <li><b>Пользователи (бесплатно):</b> люди с высокой долговой нагрузкой (2+ кредита, платежи больше 50% дохода), готовые к подработке.</li>
+        <li><b>Плательщики (B2B):</b>
+          <br>1. Банки и МФО (снижение просрочки).
+          <br>2. Gig-платформы (нужны работники).
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-bottom">
+    <div class="box">
+      <div class="title">9. Cost Structure (Структура расходов)</div>
+      <ul>
+        <li><b>Постоянные:</b> команда разработки, серверы и БД.</li>
+        <li><b>Переменные:</b> API языковой модели, маркетинг через банки.</li>
+        <li><b>Безопасность и compliance:</b> защита данных, аудит, проверка партнёров <span class="new">новое</span></li>
+      </ul>
+    </div>
+
+    <div class="box">
+      <div class="title">5. Revenue Streams (Потоки доходов)</div>
+      <ul>
+        <li><b>Portfolio Fee от банков:</b> % за клиента, который вернулся в график, <b>в том числе через реструктуризацию</b>. Оплата не зависит от того, какой путь выбрал клиент, поэтому агент не тянет сторону банка.</li>
+        <li><b>CPA от gig-платформ:</b> фикс за каждого работника, вышедшего на смену.</li>
+        <li><s>Реклама финансовых продуктов</s> — убрали: реклама кредитов людям в долгах создаёт конфликт интересов <span class="new">изменено</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="note">Изменения от 16.10.2026: «ИИ-Адвокат» переименован в помощника по реструктуризации; добавлены защита и проверка вакансий; убрана реклама финансовых продуктов; партнёрства помечены как будущие.</p>
+</div>
+
+</body>
+</html>

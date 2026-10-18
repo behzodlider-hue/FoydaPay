@@ -1,0 +1,15 @@
+# Personal documents and submission drafts must never be pushed
+*passport*
+Behzod.pdf
+Sadik.pdf
+Mirkomil.pdf
+submission/
+.venv/
+__pycache__/
+.env
+evidence/live-run-20261018T155638Z/
+evidence/live-run-20261018T155658Z/
+evidence/live-run-20261018T160822Z/
+evidence/live-run-20261018T160846Z/
+original/
+.claude/

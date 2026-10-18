@@ -1,0 +1,14 @@
+# Render Blueprint: New > Blueprint > pick this repo. Secrets are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: foydapay
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: FOYDAPAY_PROVIDER
+        value: gemini
+      - key: FOYDAPAY_GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_API_KEY
+        sync: false   # Render asks for the value at creation time and stores it as a secret

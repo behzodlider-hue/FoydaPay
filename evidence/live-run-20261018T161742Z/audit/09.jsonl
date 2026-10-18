@@ -1,0 +1,2 @@
+{"ts": "2026-10-18T16:20:12+00:00", "tool": "get_account_overview", "tier": "T0", "decision": "allow", "params": {}, "reason": "", "prev": "0000000000000000000000000000000000000000000000000000000000000000", "hash": "c99a5928700cfaecc9b3474f332df1aadd47d9003cb4373cc99a6d578e12abd8"}
+{"ts": "2026-10-18T16:20:14+00:00", "tool": "build_rescue_plan", "tier": "T1", "decision": "allow", "params": {}, "reason": "", "prev": "c99a5928700cfaecc9b3474f332df1aadd47d9003cb4373cc99a6d578e12abd8", "hash": "5335e396d0350a026433092f32c919b5aef1d75a5cc01420a3d40a7f82cead28"}
