@@ -120,3 +120,20 @@ def test_security_summary_chat_reset_and_validation():
     assert c.post("/api/chat/reset", json={"session_id": sid}).json()["turns"] == 0
     bad = {**V2, "subscriptions": [{"key": "other", "used": True, "name": "X"}]}
     assert c.post("/api/profile", json={"session_id": sid, **bad}).status_code == 422  # "other" needs a price
+
+
+def test_phone_fetched_vacancies_are_validated_and_reach_the_agent(monkeypatch):
+    from app import jobs
+    monkeypatch.setattr(jobs, "_fetch", lambda region, query: [])  # the server cannot reach the database
+    c = TestClient(app)
+    sid = c.post("/api/session").json()["session_id"]
+    c.post("/api/profile", json={"session_id": sid, **V2, "region": "1718"})
+    plan = c.post("/api/jobs", json={"session_id": sid, "fetch": False}).json()
+    assert plan["region_code"] == "1718" and plan["queries"] and plan["vacancies"] == []
+    found = [{"id": 42, "title": "Переводчик", "company": "Test LLC", "salary": 2_000_000, "rate": 1, "region_code": "1718"}]
+    r = c.post("/api/jobs", json={"session_id": sid, "found": found}).json()
+    assert r["vacancies"][0]["url"] == "https://ish.mehnat.uz/vacancies/42" and r["vacancies"][0]["region"] == "Samarkand"
+    assert c.post("/api/jobs", json={"session_id": sid, "found": [{**found[0], "id": "x"}]}).status_code == 422
+    s = next(v[0] for k, v in __import__("app.main", fromlist=["sessions"]).sessions.items() if k == sid)
+    out = call(s, "search_vacancies", {}).content["result"]
+    assert out["vacancies"][0]["id"] == 42 and "phone" in out["fetched_by"]

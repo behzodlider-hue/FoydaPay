@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from typing import Literal
 
+from . import jobs
 from .agent import Agent
 from .sandbox import fmt, make_sandbox_from_profile
 from .toolbox import TOOLS, Session, call, confirm, debt_load, expire_pending, rescue_plan
@@ -85,9 +86,23 @@ class ProfileIn(BaseModel):
     work_status: Literal["employed", "self_employed", "student", "unemployed", "retired", ""] = ""
 
 
+class VacancyIn(BaseModel):
+    """One vacancy the phone fetched from ishapi.mehnat.uz. Checked again here: only official vacancy links are accepted."""
+    id: int = Field(ge=1)
+    title: str = Field(default="", max_length=120)
+    title_uz: str = Field(default="", max_length=120)
+    company: str = Field(default="", max_length=120)
+    salary: int = Field(default=0, ge=0, le=1_000_000_000)
+    rate: float = Field(default=1.0, ge=0, le=5)
+    region_code: str = Field(default="", pattern=r"^\d{0,7}$")
+    posted: str | None = Field(default=None, max_length=10)
+
+
 class JobsIn(BaseModel):
     session_id: str = Field(min_length=8, max_length=64)
     query: str = Field(default="", max_length=40)
+    fetch: bool = True  # False: only the search plan, the phone queries the database itself
+    found: list[VacancyIn] | None = Field(default=None, max_length=30)
 
 
 class ActionIn(BaseModel):
@@ -234,6 +249,15 @@ def find_jobs(body: JobsIn, request: Request) -> dict:
     """Real vacancies for the user's region and skills (National Vacancy Database). Goes through the guard and audit log."""
     rate_limit(request)
     s = get_session(body.session_id)
+    sb = s.sb
+    skills = list(sb.skills) if sb.custom else ["smartphone", "excel-basic"]
+    if body.found is not None:  # results the phone fetched: keep them for the agent and return them in the usual shape
+        rows = [{**v.model_dump(), "region": jobs.REGIONS.get(v.region_code[:4], ""), "url": f"{jobs.SITE}/vacancies/{v.id}"} for v in body.found]
+        sb.jobs_found = rows
+        s.audit.add("search_vacancies", "T0", "allow", {"source": "phone", "count": len(rows)}, "vacancies fetched by the user's phone")
+        return jobs.result(sb.region if sb.region in jobs.REGIONS else None, jobs.queries_for(skills, sb.has_car, body.query), rows)
+    if not body.fetch:
+        return jobs.search(sb.region, skills, sb.has_car, body.query, fetch=False)
     out = call(s, "search_vacancies", {"query": body.query} if body.query else {})
     if out.is_error:
         raise HTTPException(502, "The vacancy database did not answer. Try again in a minute.")

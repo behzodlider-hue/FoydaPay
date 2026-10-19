@@ -17,7 +17,7 @@ log = logging.getLogger("foydapay.jobs")
 API = "https://ishapi.mehnat.uz/api/v1/vacancies"
 SITE = "https://ish.mehnat.uz"
 SOURCE = {"name": "National Vacancy Database (Ministry of Employment and Poverty Reduction)", "url": SITE + "/vacancies"}
-TIMEOUT = 8
+TIMEOUT = 6
 CACHE_TTL = 30 * 60
 _cache: dict[tuple, tuple[float, list]] = {}
 
@@ -93,20 +93,28 @@ def normalize(v: dict) -> dict:
     }
 
 
-def search(region: str | None, skills: list[str], has_car: bool = False, query: str = "", limit: int = 8) -> dict:
-    """Up to `limit` vacancies for the user's region and skills, best paid first."""
-    region = region if region in REGIONS else None
-    qs = queries_for(skills, has_car, query)
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        batches = list(pool.map(lambda q: _fetch(region, q), qs))
+def result(region: str | None, qs: list[str], vacancies: list[dict], limit: int = 8) -> dict:
     seen, merged = set(), []
-    for v in (v for b in batches for v in b):
+    for v in vacancies:
         if v["id"] not in seen:
             seen.add(v["id"])
             merged.append(v)
     merged.sort(key=lambda v: -v["salary"])
     hh = "https://hh.uz/search/vacancy?" + urllib.parse.urlencode({"text": qs[0], "area": HH_AREA.get(region or "", "97")})
-    return {"source": SOURCE, "region": REGIONS.get(region or "", "Uzbekistan"), "queries": qs,
+    return {"source": SOURCE, "region": REGIONS.get(region or "", "Uzbekistan"), "region_code": region or "", "queries": qs,
             "vacancies": merged[:limit], "more": {"hh": hh, "official": SOURCE["url"]},
             "note": "Real vacancies posted by employers. Salaries are per month for the given rate (1.0 = full-time). "
                     "Check the schedule and conditions with the employer; never pay anyone to get a job."}
+
+
+def search(region: str | None, skills: list[str], has_car: bool = False, query: str = "", limit: int = 8, fetch: bool = True) -> dict:
+    """Up to `limit` vacancies for the user's region and skills, best paid first.
+    fetch=False returns only the search plan (queries, region, links): the phone then asks the database itself,
+    because the database answers slowly or not at all to servers outside Uzbekistan."""
+    region = region if region in REGIONS else None
+    qs = queries_for(skills, has_car, query)
+    batches = []
+    if fetch:
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            batches = list(pool.map(lambda q: _fetch(region, q), qs))
+    return result(region, qs, [v for b in batches for v in b], limit)

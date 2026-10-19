@@ -110,6 +110,7 @@ class Sandbox:
     region: str = "1726"  # SOATO region code (vacancy search); the demo user lives in Tashkent
     lang: str = "en"  # en | ru | uz: the app language the user picked
     about: dict = field(default_factory=dict)  # age band, education, work status from onboarding (no name, no gender)
+    jobs_found: list = field(default_factory=list)  # vacancies the phone fetched from the official database
 
     def main_loan(self) -> Loan:
         """The loan a restructuring request is about: the largest interest-bearing payment."""

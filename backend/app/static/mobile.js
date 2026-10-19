@@ -399,11 +399,29 @@ async function sendProfile(){
 /* ================= plan ================= */
 function cutText(c){ const p = { ...c.params }; if (p.name) p.name = subName(p.name); ['cap', 'now'].forEach(k => p[k] != null && (p[k] = fmt(p[k]))); return c.code ? t('c_' + c.code, p) : c.what; }
 function adviceText(a){ const p = { ...a.params }; if (p.name) p.name = subName(p.name); if (p.share != null) p.share = Math.round(p.share * 100); if (p.amount != null) p.amount = fmt(p.amount); return a.code ? t('a_' + a.code, p) : a.text; }
+// The National Vacancy Database answers slowly or not at all to servers abroad, but allows browser requests (CORS: *).
+// So the phone asks it directly, then hands the results to the server, which keeps them for the agent.
+const VACANCY_API = 'https://ishapi.mehnat.uz/api/v1/vacancies';
+async function fetchVacancies(region, query){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const url = VACANCY_API + '?' + new URLSearchParams({ per_page: 10, search: query, ...(region ? { company_soato_code: region } : {}) });
+    const rows = (await (await fetch(url, { signal: ctl.signal })).json()).data.data;
+    return rows.filter(v => v.company_name && Number.isInteger(v.id)).map(v => ({
+      id: v.id, title: String(v.position_name_ru || v.position_name || '').trim().slice(0, 120), title_uz: String(v.position_name || '').trim().slice(0, 120),
+      company: String(v.company_name).replace(/"/g, '').trim().slice(0, 120), salary: Math.max(0, Math.round(+v.position_salary || 0)),
+      rate: Math.min(5, +v.position_rate || 1), region_code: String(v.company_soato_code4 || '').replace(/\D/g, '').slice(0, 7), posted: String(v.date_start || '').slice(0, 10) || null }));
+  } catch (e) { return []; } finally { clearTimeout(timer); }
+}
 function loadJobs(){
   if (JOBS && JOBS.state !== 'error') return;
   JOBS = { state: 'loading' };
   const sid = SID;
-  api('/api/jobs', { session_id: sid }).then(d => { if (sid === SID) JOBS = { state: 'ok', data: d }; })
+  (async () => {
+    const planned = await api('/api/jobs', { session_id: sid, fetch: false });
+    const found = (await Promise.all(planned.queries.map(q => fetchVacancies(planned.region_code, q)))).flat();
+    return found.length ? api('/api/jobs', { session_id: sid, found: found.slice(0, 30) }) : api('/api/jobs', { session_id: sid });
+  })().then(d => { if (sid === SID) JOBS = { state: 'ok', data: d }; })
     .catch(() => { if (sid === SID) JOBS = { state: 'error' }; })
     .finally(() => { if (sid === SID && current() === 'plan') renderEarn(); });
 }
