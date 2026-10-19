@@ -57,3 +57,36 @@ def test_profile_validation():
     assert c.post("/api/profile", json={"session_id": sid, **bad}).status_code == 422
     assert c.post("/api/profile", json={"session_id": sid, **PROFILE, "income": 5}).status_code == 422
     assert c.get("/app").status_code == 200
+
+
+V2 = {**PROFILE, "income": 3_500_000, "delivery": 200_000, "cafes": 100_000, "other": 400_000, "payday": 10,
+      "loans": [{**PROFILE["loans"][0], "due_day": 5}, {**PROFILE["loans"][1], "due_day": 20}],
+      "subscriptions": [{"key": "music", "used": True}, {"key": "other", "used": False, "name": "Game pass", "amount": 45_000}],
+      "weekend_days": 0, "evenings": 0, "hours_per_week": 3, "formats": ["online", "alternate_odd"], "skills": [],
+      "skills_note": "I can teach English"}
+
+
+def test_other_spending_formats_and_free_text_skills():
+    sb = make_sandbox_from_profile(V2)
+    p = rescue_plan(sb)
+    assert "languages" in sb.skills and sb.hours_cap == 12 and sb.loans[0].due_day == 5
+    assert any("Game pass" in c["what"] for c in p["cut"]["items"])  # the user's own unused subscription
+    assert any("'other'" in c["what"] for c in p["cut"]["items"]) and any("Other" in a for a in p["advice"])
+    jobs = {j["gig_id"]: j for j in p["earn"]["plan"]}
+    assert "G9" in jobs and sum(j["hours"] for j in p["earn"]["plan"]) <= 12  # online lessons, within the hours cap
+    assert not {"G1", "G2", "G4"} & set(jobs)  # no weekend/evening time, no car
+    assert {r["gig_id"] for r in p["earn"]["rejected"]} == {"G5", "G6"}  # only scams are listed as rejected
+
+
+def test_security_summary_chat_reset_and_validation():
+    c = TestClient(app)
+    sid = c.post("/api/session").json()["session_id"]
+    assert c.post("/api/profile", json={"session_id": sid, **V2}).status_code == 200
+    st = c.post("/api/action", json={"session_id": sid, "tool": "transfer_to_card", "args": {"card_number": "8600111122223333", "amount": 5}}).json()["state"]
+    assert st["security"]["attacks"] == 1 and "unknown card" in st["security"]["events"][0]["text"] and st["security"]["log_intact"]
+    hist = [{"role": "assistant", "text": "Hi"}, {"role": "user", "text": "Where does my money go?"},
+            {"role": "assistant", "text": "Mostly rent."}, {"role": "user", "text": "unanswered"}]
+    assert c.post("/api/chat/reset", json={"session_id": sid, "history": hist}).json()["turns"] == 2  # starts with the user, ends answered
+    assert c.post("/api/chat/reset", json={"session_id": sid}).json()["turns"] == 0
+    bad = {**V2, "subscriptions": [{"key": "other", "used": True, "name": "X"}]}
+    assert c.post("/api/profile", json={"session_id": sid, **bad}).status_code == 422  # "other" needs a price

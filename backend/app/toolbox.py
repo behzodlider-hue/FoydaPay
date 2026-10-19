@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from .audit import AuditLog
-from .sandbox import MONTHS, SAFE_DTI, Sandbox, annuity, fmt, make_sandbox
+from .sandbox import MONTHS, OTHER_SHARE_FLAG, SAFE_DTI, Sandbox, annuity, fmt, make_sandbox
 
 
 # --------------------------------------------------------------------------- session
@@ -75,22 +75,39 @@ def vet_gig(sb: Sandbox, g) -> str | None:
     return None
 
 
+def slot_capacity(sb: Sandbox) -> dict[str, int]:
+    """Shifts a month the user can take per time slot. Formats come from the mobile quick check;
+    without them only the weekend/evening counters (and flexible work) apply, as for the demo user."""
+    f = set(sb.formats)
+    return {"weekend": sb.weekend_shifts,
+            "evening": sb.evening_shifts or (8 if "evening" in f else 0),
+            "flexible": 99,
+            "day": 20 if "day" in f else 13 if f & {"alternate_even", "alternate_odd"} else 0,
+            "night": 8 if "night" in f else 0,
+            "online": 99 if "online" in f else 0}
+
+
 def plan_gigs(sb: Sandbox, target: float) -> dict:
     ok, rejected = [], []
+    caps = slot_capacity(sb)
     for g in sb.gigs:
         reason = vet_gig(sb, g)
-        (rejected.append({"gig_id": g.id, "title": g.title, "reason": reason}) if reason else ok.append(g))
+        if reason is None:
+            ok.append(g)
+        elif g.upfront_fee or not sb.custom:  # quiet for unsuitable jobs in a user's own catalog; scams are always shown
+            rejected.append({"gig_id": g.id, "title": g.title, "reason": reason})
     ok.sort(key=lambda g: g.pay / g.hours, reverse=True)
-    slots = {"weekend": sb.weekend_shifts, "evening": sb.evening_shifts, "flexible": 99}
+    hours_left = sb.hours_cap or 10_000
     plan, total = [], 0
     for g in ok:
         n = 0
-        while total < target and n < g.max_shifts and slots[g.slot] > 0:
+        while total < target and n < g.max_shifts and caps[g.slot] > 0 and hours_left >= g.hours:
             n += 1
-            slots[g.slot] -= 1
+            caps[g.slot] -= 1
+            hours_left -= g.hours
             total += g.pay
         if n:
-            plan.append({"gig_id": g.id, "title": g.title, "shifts": n, "earns": n * g.pay, "hours": n * g.hours})
+            plan.append({"gig_id": g.id, "title": g.title, "shifts": n, "earns": n * g.pay, "hours": n * g.hours, "slot": g.slot})
     return {"plan": plan, "total": total, "hours": sum(p["hours"] for p in plan), "rejected": rejected}
 
 
@@ -103,7 +120,7 @@ def rescue_plan(sb: Sandbox) -> dict:
     d = debt_load(sb)
     o = cat_sums(sb, "Oct")
     g = lambda k: o.get(k, 0)
-    living = (sb.rent + g("Groceries") + g("Food delivery") + g("Transport") + g("Cafes")
+    living = (sb.rent + g("Groceries") + g("Food delivery") + g("Transport") + g("Cafes") + g("Other")
               + sum(b.avg for b in sb.bills) + sum(s.amount for s in sb.subs if s.active))
     shortfall = living + d["total"] - sb.income
     cuts = [{"what": f"Cancel {s.name} (unused {s.unused_days} days)", "saves": s.amount, "subscription_id": s.id}
@@ -112,6 +129,8 @@ def rescue_plan(sb: Sandbox) -> dict:
         {"what": f"Cap food delivery at 240 000 (now: {fmt(g('Food delivery'))})", "saves": max(0, g("Food delivery") - 240_000)},
         {"what": f"Cap cafes at 120 000 (now: {fmt(g('Cafes'))})", "saves": max(0, g("Cafes") - 120_000)},
     ) if c["saves"] > 0]
+    if g("Other") >= sb.income * OTHER_SHARE_FLAG:
+        cuts.append({"what": f"Cut 'other' spending by 20% (now: {fmt(g('Other'))})", "saves": round(g("Other") * 0.2, -3)})
     cut = sum(c["saves"] for c in cuts)
     after_cuts = max(0, shortfall - cut)
     gigs = plan_gigs(sb, after_cuts)
@@ -124,10 +143,25 @@ def rescue_plan(sb: Sandbox) -> dict:
         "remaining_after_cuts": round(after_cuts),
         "earn": gigs,
         "remaining_after_side_jobs": round(after_cuts - gigs["total"]),
+        "advice": advice(sb, g("Other")),
         "negotiate": {"loan_id": l1.id, "lender": l1.lender, "months": n_ext, "saves_per_month": round(l1.payment - p18),
                       "new_debt_load": round((d["total"] - l1.payment + p18) / sb.income, 3),
                       "extra_interest_total": round(p18 * n_ext - l1.payment * l1.months)},
     }
+
+
+def advice(sb: Sandbox, other: float) -> list[str]:
+    """Tips that are not counted as savings: the user decides after a look at the details."""
+    tips = []
+    if other >= sb.income * OTHER_SHARE_FLAG:
+        tips.append(f"'Other' spending is {other / sb.income:.0%} of your income. Unlabelled money usually goes to cash purchases, "
+                    "transfers to family and small impulse buys: write each one down for two weeks, then set a monthly cap.")
+    for x in sb.subs:
+        if x.active and x.unused_days <= 30 and x.amount >= 100_000:
+            tips.append(f"{x.name} costs {fmt(x.amount)} a month. Check for a cheaper, student or family plan.")
+    if sum(1 for x in sb.subs if x.active and x.unused_days <= 30) >= 3:
+        tips.append("You use 3 or more subscriptions. Keep one of each kind (one video, one music) and pause the rest for a month.")
+    return tips
 
 
 SCAM_PATTERNS = [
@@ -165,12 +199,15 @@ def t_overview(s: Session, a: dict) -> dict:
     return {
         "user": sb.name, "card_balance": round(sb.balance), "monthly_income": sb.income, "payday": sb.payday,
         "loans": [{"loan_id": l.id, "lender": l.lender, "label": l.label, "balance": l.balance, "annual_rate": l.rate,
-                   "months_left": l.months, "monthly_payment": round(l.payment)} for l in sb.loans],
+                   "months_left": l.months, "monthly_payment": round(l.payment), "due_day": l.due_day or None} for l in sb.loans],
         "loan_payments_total": round(d["total"]), "debt_load": round(d["dti"], 3), "safe_debt_load": SAFE_DTI,
         "bills": [{"bill_id": b.id, "name": b.name, "amount": b.amount, "paid": b.paid} for b in sb.bills],
         "subscriptions": [{"subscription_id": x.id, "name": x.name, "amount": x.amount, "active": x.active,
                            "unused_days": x.unused_days} for x in sb.subs],
         "agent_payment_limit_today": {"limit": sb.daily_limit, "used": round(sb.daily_spent)},
+        **({"side_job_preferences": {"formats": list(sb.formats), "hours_per_month": sb.hours_cap or None,
+                                     "skills": list(sb.skills), "has_car": sb.has_car, "user_says_they_can": sb.skills_note}}
+           if sb.custom else {}),
     }
 
 
@@ -350,7 +387,7 @@ def x_pay_loan(s: Session, a: dict) -> str:
 
 
 def p_book(s: Session, a: dict):
-    items, slots = [], {"weekend": s.sb.weekend_shifts, "evening": s.sb.evening_shifts, "flexible": 99}
+    items, slots = [], slot_capacity(s.sb)
     for b in a["bookings"]:
         g = s.sb.gig(b["gig_id"])
         if not g:

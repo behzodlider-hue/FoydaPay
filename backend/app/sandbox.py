@@ -1,6 +1,7 @@
-"""Synthetic sandbox account for one demo user (Jasur). No real people or brands."""
+"""Synthetic sandbox accounts: the demo user (Jasur) or one built from a user's own quick-check answers. No real people or brands."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 MONTHS = ["Aug", "Sep", "Oct"]
@@ -26,6 +27,7 @@ class Loan:
     balance: float
     rate: float
     months: int
+    due_day: int = 0  # day of month the payment is due; 0 = unknown
 
     @property
     def payment(self) -> float:
@@ -58,7 +60,7 @@ class Gig:
     platform: str
     pay: int
     hours: int
-    slot: str  # weekend | evening | flexible
+    slot: str  # weekend | evening | flexible | day | night | online
     max_shifts: int
     skill: str | None = None
     needs_car: bool = False
@@ -101,6 +103,10 @@ class Sandbox:
     # Budget targets for next month; the demo user's values, or derived from a user's own profile.
     targets: dict = field(default_factory=lambda: {"Groceries": 1_050_000, "Transport": 350_000})
     custom: bool = False  # True when built from the user's own inputs
+    # Side-job preferences from the mobile quick check (empty = the demo user's weekend/evening counters only).
+    formats: tuple = ()  # day | alternate_even | alternate_odd | evening | night | online
+    hours_cap: int = 0  # max side-job hours a month; 0 = no cap
+    skills_note: str = ""  # free text: what the user says they can do
 
     def main_loan(self) -> Loan:
         """The loan a restructuring request is about: the largest interest-bearing payment."""
@@ -155,7 +161,31 @@ def demo_gigs() -> list[Gig]:
     ]
 
 
-GIG_PAYEES = {"QuickCourier", "MarketHub", "DataDesk Remote", "Loan-payment pocket"}
+def profile_gigs() -> list[Gig]:
+    """Catalog for users who fill the quick check: the demo gigs plus day, night and online work."""
+    gigs = demo_gigs()
+    for g in gigs:
+        if g.id in ("G3", "G6"):
+            g.slot = "online"
+    return gigs + [
+        Gig("G7", "CityPost - daytime parcel courier", "CityPost", 180_000, 6, "day", 12, skill="smartphone"),
+        Gig("G8", "NightMart - night cashier at a 24/7 store", "NightMart", 210_000, 8, "night", 8),
+        Gig("G9", "TutorLink - online English or Russian lessons", "TutorLink", 120_000, 2, "online", 12, skill="languages"),
+        Gig("G10", "ShopStudio - social media posts for a small shop", "ShopStudio", 350_000, 8, "online", 2, skill="design"),
+        Gig("G11", "CargoGo - daytime delivery with your own car", "CargoGo", 380_000, 8, "day", 8, needs_car=True),
+        Gig("G12", "AppCheck - test shop apps from your phone", "AppCheck", 60_000, 2, "online", 6, skill="smartphone"),
+    ]
+
+
+GIG_PAYEES = {"QuickCourier", "MarketHub", "DataDesk Remote", "Loan-payment pocket",
+              "CityPost", "NightMart", "TutorLink", "ShopStudio", "CargoGo", "AppCheck"}
+# Words in the free-text "what I can do" field that unlock a skill-matched job.
+SKILL_WORDS = {
+    "excel-basic": r"excel|1c|1с|computer|компьют|kompyuter|word|таблиц|data",
+    "languages": r"english|англ|ingliz|russian|русск|rus til|tutor|teach|репетит|преподав|o'qit|translat|перевод",
+    "design": r"design|дизайн|canva|photoshop|figma|smm|instagram|video edit|монтаж|фото|photo",
+    "smartphone": r"phone|телефон|smartfon|app|приложен|courier|курьер",
+}
 
 
 def _demo_rest(sb: Sandbox) -> None:
@@ -191,35 +221,43 @@ def _demo_rest(sb: Sandbox) -> None:
 
 SUB_CATALOG = {"music": ("Music streaming", 39_000), "video": ("Video streaming", 59_000),
                "video2": ("Second video service", 89_000), "gym": ("Gym membership", 250_000), "cloud": ("Cloud storage", 25_000)}
+OTHER_SHARE_FLAG = 0.05  # "other" spending above 5% of income gets a tracking target
 
 
 def make_sandbox_from_profile(p: dict) -> Sandbox:
     """Build a sandbox from the user's own answers in the mobile quick check.
 
-    p = {name, income, balance, rent, groceries, transport, delivery, cafes, utilities,
-         loans: [{label, lender, balance, rate, months}], subscriptions: [{key, used}],
-         weekend_days, evenings, skills: [..], has_car}
+    p = {name, income, payday, balance, rent, groceries, transport, delivery, cafes, utilities, other,
+         loans: [{label, lender, balance, rate, months, due_day}], subscriptions: [{key, used, name?, amount?}],
+         weekend_days, evenings, hours_per_week, formats: [..], skills: [..], skills_note, has_car}
     The same three months are written for Aug–Oct so every tool (breakdown, comparison, plan) works unchanged.
     """
+    note = (p.get("skills_note") or "")[:200]
+    skills = set(p.get("skills", ())) | {k for k, rx in SKILL_WORDS.items() if re.search(rx, note, re.I)}
+    day = int(p.get("payday") or 25)
     sb = Sandbox(name=p.get("name") or "you", income=int(p["income"]), balance=float(p.get("balance", 0)),
-                 rent=int(p.get("rent", 0)), skills=tuple(p.get("skills", ())), has_car=bool(p.get("has_car", False)),
-                 weekend_shifts=int(p.get("weekend_days", 0)), evening_shifts=int(p.get("evenings", 0)), custom=True)
+                 payday=f"day {day} of the month", rent=int(p.get("rent", 0)), skills=tuple(sorted(skills)),
+                 has_car=bool(p.get("has_car", False)), weekend_shifts=int(p.get("weekend_days", 0)),
+                 evening_shifts=int(p.get("evenings", 0)), custom=True, formats=tuple(p.get("formats", ())),
+                 hours_cap=int(p.get("hours_per_week", 0)) * 4, skills_note=note)
     sb.loans = [Loan(f"L{i}", (l.get("lender") or l["label"])[:40], l["label"][:40], float(l["balance"]),
-                     float(l["rate"]) / 100, max(1, int(l["months"]))) for i, l in enumerate(p.get("loans", []), start=1)]
+                     float(l["rate"]) / 100, max(1, int(l["months"])), int(l.get("due_day") or 0))
+                for i, l in enumerate(p.get("loans", []), start=1)]
     util = int(p.get("utilities", 0))
     sb.bills = [Bill("B1", "Utilities", "Utility provider", util, util)] if util else []
     sb.subs = []
     for i, s in enumerate(p.get("subscriptions", []), start=1):
-        name, amount = SUB_CATALOG[s["key"]]
+        name, amount = SUB_CATALOG.get(s["key"], ("Other subscription", 0))
+        name, amount = (s.get("name") or name)[:30], int(s.get("amount") or amount)
         sb.subs.append(Subscription(f"S{i}", name, amount, 2 if s.get("used", True) else 60))
-    sb.gigs = demo_gigs()
+    sb.gigs = profile_gigs()
     sb.known_payees = {l.lender for l in sb.loans} | {b.payee for b in sb.bills} | GIG_PAYEES
     sb.targets = {"Groceries": round(int(p.get("groceries", 0)) * 0.95 / 10_000) * 10_000,
                   "Transport": int(p.get("transport", 0))}
     for m in MONTHS:
         sb.tx.append(Tx(m, "Income", "Salary", sb.income))
         for cat, key in (("Rent", "rent"), ("Groceries", "groceries"), ("Transport", "transport"),
-                         ("Food delivery", "delivery"), ("Cafes", "cafes")):
+                         ("Food delivery", "delivery"), ("Cafes", "cafes"), ("Other", "other")):
             if int(p.get(key, 0)):
                 sb.tx.append(Tx(m, cat, cat, -int(p[key])))
         for b in sb.bills:
