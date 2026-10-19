@@ -659,9 +659,11 @@ function richText(target, text){
   text.split('\n').forEach((line, i) => {
     if (i) target.append('\n');
     line = line.replace(/^(\s*)[*-]\s+/, '$1• ').replace(/`/g, '');
-    // **bold** and bare https links; everything else stays plain text
-    line.split(/(\*\*[^*]+\*\*|https:\/\/[^\s)]+)/g).forEach(part => {
-      if (/^\*\*[^*]+\*\*$/.test(part)) target.append(el('b', { text: part.slice(2, -2) }));
+    // **bold**, [text](https://link) and bare https links; everything else stays plain text
+    line.split(/(\*\*[^*]+\*\*|\[[^\]]{1,80}\]\(https:\/\/[^\s)]+\)|https:\/\/[^\s)]+)/g).forEach(part => {
+      const md = /^\[([^\]]+)\]\((https:\/\/[^\s)]+)\)$/.exec(part);
+      if (md) target.append(el('a', { href: md[2], target: '_blank', rel: 'noopener', text: md[1] + ' ↗' }));
+      else if (/^\*\*[^*]+\*\*$/.test(part)) target.append(el('b', { text: part.slice(2, -2) }));
       else if (/^https:\/\//.test(part)) { const u = part.replace(/[.,;]+$/, ''); target.append(el('a', { href: u, target: '_blank', rel: 'noopener', text: u.replace(/^https:\/\//, '').slice(0, 48) }), part.slice(u.length)); }
       else if (part) target.append(part.replace(/\*+/g, ''));
     });
