@@ -1,0 +1,42 @@
+{
+  "steps": ["intro", "plan", "cut", "confirm", "earn", "negotiate", "calendar", "security", "message", "chat", "outro"],
+  "en": {
+    "intro": "Meet Jasur, our demo user. FoydaPay shows his card balance and how much of his income goes to loans: fifty-two percent. The Central Bank says loan payments should not exceed half of income.",
+    "plan": "FoydaPay found that next month Jasur is short about one point four million sum. Tap here to open his plan.",
+    "cut": "Step one: cut. Unused subscriptions and spending caps, calculated from his own numbers.",
+    "confirm": "Nothing happens without Jasur. Every action becomes a confirmation card, and only he can press Confirm.",
+    "earn": "Step two: earn. FoydaPay looks for real vacancies in his region in the National Vacancy Database, and every job links to its official page.",
+    "negotiate": "Step three: negotiate. FoydaPay drafts a letter asking the bank for a longer term, and shows honestly how much more interest that costs.",
+    "calendar": "The calendar shows payment days and payday, and you can set your own reminders.",
+    "security": "Security explains in plain words whether someone tried to trick you. Here FoydaPay blocked a transfer to an unknown card.",
+    "message": "Got a suspicious SMS or Telegram message? Paste it here, and FoydaPay checks it for scam signs.",
+    "chat": "And you can ask the AI agent anything, in Uzbek, Russian or English.",
+    "outro": "Now it's your turn. Tap Check and enter your own numbers. It takes about two minutes."
+  },
+  "ru": {
+    "intro": "Знакомьтесь, это Жасур, наш демо-пользователь. FoydaPay показывает баланс его карты и какую часть дохода съедают кредиты: пятьдесят два процента. По данным Центрального банка, платежи по кредитам не должны превышать половину дохода.",
+    "plan": "FoydaPay посчитал, что в следующем месяце Жасуру не хватает около одного миллиона четырёхсот тысяч сумов. Нажмите сюда, чтобы открыть его план.",
+    "cut": "Шаг первый: сократить. Ненужные подписки и лимиты на расходы, всё посчитано по его собственным цифрам.",
+    "confirm": "Без Жасура ничего не происходит. Каждое действие превращается в карточку подтверждения, и нажать «Подтвердить» может только он.",
+    "earn": "Шаг второй: заработать. FoydaPay ищет реальные вакансии в его регионе в Национальной базе вакансий, и у каждой есть ссылка на официальную страницу.",
+    "negotiate": "Шаг третий: договориться. FoydaPay готовит письмо в банк с просьбой продлить срок и честно показывает, сколько процентов придётся переплатить.",
+    "calendar": "В календаре видны дни платежей и зарплаты, а ещё можно поставить свои напоминания.",
+    "security": "Раздел «Безопасность» простыми словами объясняет, пытался ли кто-то вас обмануть. Здесь FoydaPay заблокировал перевод на чужую карту.",
+    "message": "Пришло подозрительное SMS или сообщение в Телеграме? Вставьте его сюда, и FoydaPay проверит его на признаки мошенничества.",
+    "chat": "А ещё можно спросить ИИ-агента о чём угодно: на узбекском, русском или английском.",
+    "outro": "Теперь ваша очередь. Нажмите «Проверка» и введите свои цифры. Это займёт около двух минут."
+  },
+  "uz": {
+    "intro": "Tanishing, bu Jasur, bizning namunaviy foydalanuvchimiz. FoydaPay uning karta balansini va daromadining qancha qismi kreditlarga ketayotganini ko'rsatadi: ellik ikki foiz. Markaziy bank ma'lumotiga ko'ra, kredit to'lovlari daromadning yarmidan oshmasligi kerak.",
+    "plan": "FoydaPay hisobladi: kelgusi oyda Jasurga taxminan bir million to'rt yuz ming so'm yetmaydi. Uning rejasini ochish uchun shu yerni bosing.",
+    "cut": "Birinchi qadam: qisqartirish. Foydalanilmayotgan obunalar va xarajat chegaralari, barchasi uning o'z raqamlari asosida hisoblangan.",
+    "confirm": "Jasursiz hech narsa sodir bo'lmaydi. Har bir amal tasdiqlash kartasiga aylanadi va «Tasdiqlash» tugmasini faqat uning o'zi bosa oladi.",
+    "earn": "Ikkinchi qadam: daromad. FoydaPay Milliy vakansiyalar bazasidan uning hududidagi haqiqiy vakansiyalarni topadi, har birida rasmiy sahifaga havola bor.",
+    "negotiate": "Uchinchi qadam: kelishish. FoydaPay bankka muddatni uzaytirish haqida xat tayyorlaydi va qancha ortiqcha foiz to'lanishini halol ko'rsatadi.",
+    "calendar": "Kalendarda to'lov kunlari va maosh kuni ko'rinadi, o'zingizning eslatmalaringizni ham qo'yishingiz mumkin.",
+    "security": "Xavfsizlik bo'limi kimdir sizni aldashga uringan-urinmaganini oddiy so'zlar bilan tushuntiradi. Bu yerda FoydaPay begona kartaga o'tkazmani to'xtatdi.",
+    "message": "Shubhali SMS yoki Telegram xabari keldimi? Uni shu yerga qo'ying, FoydaPay firibgarlik belgilarini tekshiradi.",
+    "chat": "Sun'iy intellekt agentidan istalgan narsani so'rashingiz mumkin: o'zbek, rus yoki ingliz tilida.",
+    "outro": "Endi navbat sizda. «Tekshiruv» tugmasini bosing va o'z raqamlaringizni kiriting. Bu taxminan ikki daqiqa oladi."
+  }
+}

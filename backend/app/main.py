@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
 from typing import Literal
@@ -76,6 +77,17 @@ class ProfileIn(BaseModel):
     skills: list[Literal["excel-basic", "smartphone", "languages", "design"]] = Field(default_factory=list, max_length=4)
     skills_note: str = Field(default="", max_length=200)
     has_car: bool = False
+    # From the onboarding screen. Name and gender stay on the phone; these help find vacancies and word the advice.
+    lang: Literal["en", "ru", "uz"] = "en"
+    region: str = Field(default="1726", pattern=r"^\d{4}$")
+    age: int | None = Field(default=None, ge=14, le=100)
+    education: Literal["school", "college", "bachelor", "master", ""] = ""
+    work_status: Literal["employed", "self_employed", "student", "unemployed", "retired", ""] = ""
+
+
+class JobsIn(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    query: str = Field(default="", max_length=40)
 
 
 class ActionIn(BaseModel):
@@ -138,11 +150,11 @@ def security(s: Session) -> dict:
     for e in s.audit.entries:
         if e["decision"] not in ("deny", "flag") or e["tool"] == "confirmation":
             continue
-        text = SECURITY_TEXT.get(e["tool"])
+        kind, text = e["tool"], SECURITY_TEXT.get(e["tool"])
         if not text and "trusted payee" in e["reason"]:
-            text = "A payment to a recipient you never paid before was stopped."
-        if text:
-            events.append({"at": e["ts"], "text": text, "level": "blocked" if e["decision"] == "deny" else "ignored"})
+            kind, text = "untrusted_payee", "A payment to a recipient you never paid before was stopped."
+        if text:  # kind lets the phone app show the line in the user's language
+            events.append({"at": e["ts"], "kind": kind, "text": text, "level": "blocked" if e["decision"] == "deny" else "ignored"})
     return {"attacks": len(events), "events": events[-10:][::-1], "log_intact": s.audit.verify()}
 
 
@@ -217,6 +229,17 @@ def set_profile(body: ProfileIn) -> dict:
     return {"plan": rescue_plan(s.sb), "state": state(s)}
 
 
+@app.post("/api/jobs")
+def find_jobs(body: JobsIn, request: Request) -> dict:
+    """Real vacancies for the user's region and skills (National Vacancy Database). Goes through the guard and audit log."""
+    rate_limit(request)
+    s = get_session(body.session_id)
+    out = call(s, "search_vacancies", {"query": body.query} if body.query else {})
+    if out.is_error:
+        raise HTTPException(502, "The vacancy database did not answer. Try again in a minute.")
+    return out.content["result"]
+
+
 @app.post("/api/action")
 def action(body: ActionIn, request: Request) -> dict:
     """Buttons in the mobile app call a tool directly. The same validation, policy guard and audit log apply."""
@@ -257,9 +280,5 @@ def mobile() -> FileResponse:
     return FileResponse(STATIC / "mobile.html")
 
 
-@app.get("/guide.mp4")
-def guide_video() -> FileResponse:
-    """First-visit video guide for the mobile app."""
-    if not (STATIC / "guide.mp4").exists():
-        raise HTTPException(404, "No guide video.")
-    return FileResponse(STATIC / "guide.mp4", media_type="video/mp4", headers={"Cache-Control": "public, max-age=86400"})
+# Scripts of the mobile app (/static/*.js) and the tour's voice-over (/static/tour/<lang>/<step>.mp3)
+app.mount("/static", StaticFiles(directory=STATIC), name="static")

@@ -107,6 +107,9 @@ class Sandbox:
     formats: tuple = ()  # day | alternate_even | alternate_odd | evening | night | online
     hours_cap: int = 0  # max side-job hours a month; 0 = no cap
     skills_note: str = ""  # free text: what the user says they can do
+    region: str = "1726"  # SOATO region code (vacancy search); the demo user lives in Tashkent
+    lang: str = "en"  # en | ru | uz: the app language the user picked
+    about: dict = field(default_factory=dict)  # age band, education, work status from onboarding (no name, no gender)
 
     def main_loan(self) -> Loan:
         """The loan a restructuring request is about: the largest interest-bearing payment."""
@@ -129,9 +132,9 @@ class Sandbox:
 def make_sandbox() -> Sandbox:
     sb = Sandbox()
     sb.loans = [
-        Loan("L1", "Bank A", "Bank A consumer loan", 18_000_000, 0.24, 12),
-        Loan("L2", "PhoneMart Installments", "Phone installment", 3_250_000, 0.0, 5),
-        Loan("L3", "MFO B", "Microloan (MFO B)", 7_500_000, 0.48, 12),
+        Loan("L1", "Bank A", "Bank A consumer loan", 18_000_000, 0.24, 12, 5),
+        Loan("L2", "PhoneMart Installments", "Phone installment", 3_250_000, 0.0, 5, 15),
+        Loan("L3", "MFO B", "Microloan (MFO B)", 7_500_000, 0.48, 12, 20),
     ]
     sb.bills = [
         Bill("B1", "Electricity", "Regional Power Co.", 280_000, 150_000),
@@ -161,24 +164,7 @@ def demo_gigs() -> list[Gig]:
     ]
 
 
-def profile_gigs() -> list[Gig]:
-    """Catalog for users who fill the quick check: the demo gigs plus day, night and online work."""
-    gigs = demo_gigs()
-    for g in gigs:
-        if g.id in ("G3", "G6"):
-            g.slot = "online"
-    return gigs + [
-        Gig("G7", "CityPost - daytime parcel courier", "CityPost", 180_000, 6, "day", 12, skill="smartphone"),
-        Gig("G8", "NightMart - night cashier at a 24/7 store", "NightMart", 210_000, 8, "night", 8),
-        Gig("G9", "TutorLink - online English or Russian lessons", "TutorLink", 120_000, 2, "online", 12, skill="languages"),
-        Gig("G10", "ShopStudio - social media posts for a small shop", "ShopStudio", 350_000, 8, "online", 2, skill="design"),
-        Gig("G11", "CargoGo - daytime delivery with your own car", "CargoGo", 380_000, 8, "day", 8, needs_car=True),
-        Gig("G12", "AppCheck - test shop apps from your phone", "AppCheck", 60_000, 2, "online", 6, skill="smartphone"),
-    ]
-
-
-GIG_PAYEES = {"QuickCourier", "MarketHub", "DataDesk Remote", "Loan-payment pocket",
-              "CityPost", "NightMart", "TutorLink", "ShopStudio", "CargoGo", "AppCheck"}
+GIG_PAYEES = {"QuickCourier", "MarketHub", "DataDesk Remote", "Loan-payment pocket"}
 # Words in the free-text "what I can do" field that unlock a skill-matched job.
 SKILL_WORDS = {
     "excel-basic": r"excel|1c|1с|computer|компьют|kompyuter|word|таблиц|data",
@@ -250,7 +236,10 @@ def make_sandbox_from_profile(p: dict) -> Sandbox:
         name, amount = SUB_CATALOG.get(s["key"], ("Other subscription", 0))
         name, amount = (s.get("name") or name)[:30], int(s.get("amount") or amount)
         sb.subs.append(Subscription(f"S{i}", name, amount, 2 if s.get("used", True) else 60))
-    sb.gigs = profile_gigs()
+    sb.gigs = []  # a real user gets real vacancies (jobs.search), not the demo gig catalog
+    sb.region = str(p.get("region") or "1726")
+    sb.lang = p.get("lang") or "en"
+    sb.about = {k: p[k] for k in ("age", "education", "work_status") if p.get(k) not in (None, "")}
     sb.known_payees = {l.lender for l in sb.loans} | {b.payee for b in sb.bills} | GIG_PAYEES
     sb.targets = {"Groceries": round(int(p.get("groceries", 0)) * 0.95 / 10_000) * 10_000,
                   "Transport": int(p.get("transport", 0))}

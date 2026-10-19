@@ -71,11 +71,40 @@ def test_other_spending_formats_and_free_text_skills():
     p = rescue_plan(sb)
     assert "languages" in sb.skills and sb.hours_cap == 12 and sb.loans[0].due_day == 5
     assert any("Game pass" in c["what"] for c in p["cut"]["items"])  # the user's own unused subscription
-    assert any("'other'" in c["what"] for c in p["cut"]["items"]) and any("Other" in a for a in p["advice"])
-    jobs = {j["gig_id"]: j for j in p["earn"]["plan"]}
-    assert "G9" in jobs and sum(j["hours"] for j in p["earn"]["plan"]) <= 12  # online lessons, within the hours cap
-    assert not {"G1", "G2", "G4"} & set(jobs)  # no weekend/evening time, no car
-    assert {r["gig_id"] for r in p["earn"]["rejected"]} == {"G5", "G6"}  # only scams are listed as rejected
+    assert {c["code"] for c in p["cut"]["items"]} >= {"cancel_sub", "cut_other"}
+    assert any(a["code"] == "other_share" for a in p["advice"])
+    assert p["earn"]["plan"] == [] and p["earn"]["rejected"] == []  # real users get real vacancies, not the demo catalog
+
+
+def test_vacancies_endpoint_uses_region_and_skills(monkeypatch):
+    from app import jobs
+    seen = []
+
+    def fake_fetch(region, query):
+        seen.append((region, query))
+        return [jobs.normalize({"id": len(seen), "company_name": "Test LLC", "position_name": "Tarjimon",
+                                "position_name_ru": query.title(), "position_salary": "2000000.00", "position_rate": "1.00",
+                                "company_soato_code4": region, "date_start": "2026-10-01"})]
+    monkeypatch.setattr(jobs, "_fetch", fake_fetch)
+    c = TestClient(app)
+    sid = c.post("/api/session").json()["session_id"]
+    c.post("/api/profile", json={"session_id": sid, **V2, "region": "1718", "lang": "uz", "work_status": "employed"})
+    r = c.post("/api/jobs", json={"session_id": sid}).json()
+    assert {q for _, q in seen} == {"переводчик", "преподаватель"} and all(reg == "1718" for reg, _ in seen)
+    assert r["region"] == "Samarkand" and r["vacancies"][0]["url"].startswith("https://ish.mehnat.uz/vacancies/")
+    assert "hh.uz/search/vacancy" in r["more"]["hh"]
+    st = c.get(f"/api/state?session_id={sid}").json()
+    assert any(e["tool"] == "search_vacancies" for e in st["audit_tail"])  # audited like every other tool
+
+
+def test_letter_follows_app_language_and_scam_codes():
+    from app.toolbox import Session as S, analyze_message_core
+    s = S()
+    s.sb = make_sandbox_from_profile({**V2, "lang": "ru"})
+    letter = call(s, "draft_restructuring_request", {"months": 18}).content["result"]["letter"]
+    assert letter.startswith("Кому: MFO X")
+    r = analyze_message_core("Debt collection: transfer to card 8600 3141 5926 5358 today or court.")
+    assert {"card", "urgency", "threat"} <= set(r["reason_codes"])
 
 
 def test_security_summary_chat_reset_and_validation():
@@ -83,7 +112,8 @@ def test_security_summary_chat_reset_and_validation():
     sid = c.post("/api/session").json()["session_id"]
     assert c.post("/api/profile", json={"session_id": sid, **V2}).status_code == 200
     st = c.post("/api/action", json={"session_id": sid, "tool": "transfer_to_card", "args": {"card_number": "8600111122223333", "amount": 5}}).json()["state"]
-    assert st["security"]["attacks"] == 1 and "unknown card" in st["security"]["events"][0]["text"] and st["security"]["log_intact"]
+    ev = st["security"]["events"][0]
+    assert st["security"]["attacks"] == 1 and ev["kind"] == "transfer_to_card" and st["security"]["log_intact"]
     hist = [{"role": "assistant", "text": "Hi"}, {"role": "user", "text": "Where does my money go?"},
             {"role": "assistant", "text": "Mostly rent."}, {"role": "user", "text": "unanswered"}]
     assert c.post("/api/chat/reset", json={"session_id": sid, "history": hist}).json()["turns"] == 2  # starts with the user, ends answered
