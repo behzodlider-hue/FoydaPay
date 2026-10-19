@@ -4,7 +4,7 @@
 
 Built by team **Capital Guardians** (Tashkent, Uzbekistan) for the 2026 Shenzhen International FinTech Competition, International AI Track, Topic A: Personal Finance Assistant.
 
-**Live demo:** https://foydapay.onrender.com
+**Live demo:** https://foydapay.onrender.com · **Mobile app:** https://foydapay.onrender.com/app (quick check from your own numbers → plan cards, chat, scam check)
 
 ## What's here
 

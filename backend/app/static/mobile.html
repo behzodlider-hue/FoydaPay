@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10231F">
+<title>FoydaPay</title>
+<style>
+:root{
+  --bg:#F3F6F5; --card:#FFFFFF; --text:#14231F; --muted:#56665F; --line:#D8E1DD;
+  --brand:#10231F; --on-brand:#EEF3EF; --on-brand-muted:#B9CCC5;
+  --accent:#17775A; --accent-soft:#E3EEE9; --on-accent:#FFFFFF;
+  --warn:#9A4C0E; --warn-soft:#FBEBDD; --bad:#B42318; --bad-soft:#FDECEA;
+  --radius:16px; --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1513; --card:#17211E; --text:#E4ECE8; --muted:#9AABA5; --line:#2B3A35;
+  --brand:#0A1210; --on-brand:#E4ECE8; --on-brand-muted:#9AABA5;
+  --accent:#3CC29A; --accent-soft:#173A2F; --on-accent:#0E1513;
+  --warn:#F2B36B; --warn-soft:#3A2A16; --bad:#FF8A80; --bad-soft:#3B1D1B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1513; --card:#17211E; --text:#E4ECE8; --muted:#9AABA5; --line:#2B3A35;
+  --brand:#0A1210; --on-brand:#E4ECE8; --on-brand-muted:#9AABA5;
+  --accent:#3CC29A; --accent-soft:#173A2F; --on-accent:#0E1513;
+  --warn:#F2B36B; --warn-soft:#3A2A16; --bad:#FF8A80; --bad-soft:#3B1D1B; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 var(--font);-webkit-tap-highlight-color:transparent}
+.phone{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative}
+@media (min-width:600px){body{background:#C9D3CF}.phone{min-height:100vh;box-shadow:0 0 0 1px var(--line)}}
+@media (min-width:600px) and (prefers-color-scheme: dark){:root:not([data-theme="light"]) body{background:#050807}}
+main{flex:1;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+section[data-tab]{display:flex;flex-direction:column;gap:14px}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin:0} h2{font-size:22px} h3{font-size:17px}
+.muted{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.hero{background:var(--brand);color:var(--on-brand);border:0}
+.hero .muted{color:var(--on-brand-muted)}
+.row{display:flex;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+.big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+button{font:inherit;border:0;border-radius:12px;padding:13px 16px;cursor:pointer;background:var(--accent-soft);color:var(--accent);font-weight:600}
+button.primary{background:var(--accent);color:var(--on-accent)}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+button.block{width:100%}
+button:disabled{opacity:.5}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:8px 12px;font-weight:500;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-width:0}
+textarea{min-height:120px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{font-size:12px;font-weight:700;padding:4px 8px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--accent-soft);color:var(--accent)} .warn{background:var(--warn-soft);color:var(--warn)} .bad{background:var(--bad-soft);color:var(--bad)}
+.banner{border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:4px}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+.list li:first-child{border-top:0}
+.list li span:last-child{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.list li span:only-child{font-weight:400;white-space:normal}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;background:var(--card);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:12px;font-weight:600}
+nav button svg{width:24px;height:24px}
+nav button[aria-current="page"]{color:var(--accent)}
+.msgs{display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;word-break:break-word;font-size:15px}
+.msg.user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.msg.agent{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.typing{align-self:flex-start;color:var(--muted);font-size:14px}
+.composer{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;background:var(--bg);padding-top:6px}
+.sheet-wrap{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{width:100%;max-width:440px;background:var(--card);border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;max-height:85vh;overflow:auto}
+.tier{font:700 12px/1 ui-monospace,Consolas,monospace;letter-spacing:.06em;color:var(--accent)}
+pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Consolas,monospace;background:var(--bg);border-radius:12px;padding:12px;margin:0}
+.ring{width:96px;height:96px;flex:none}
+a{color:var(--accent)}
+.hero a{color:var(--on-brand)}
+@media (prefers-reduced-motion: no-preference){.card,.banner{animation:in .25s ease-out}@keyframes in{from{transform:translateY(6px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+<div class="phone">
+<main>
+
+<!-- ============ HOME ============ -->
+<section data-tab="home">
+  <div class="card hero">
+    <div class="row between">
+      <div><p class="muted" id="hello">Hi</p><p class="big" id="balance">—</p><p class="muted">on your card</p></div>
+      <svg class="ring" viewBox="0 0 100 100" role="img" aria-label="Debt load">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="10"/>
+        <circle id="ringArc" cx="50" cy="50" r="42" fill="none" stroke="#4CC495" stroke-width="10" stroke-linecap="round"
+                stroke-dasharray="0 264" transform="rotate(-90 50 50)"/>
+        <text id="ringText" x="50" y="50" text-anchor="middle" dominant-baseline="central" fill="#EEF3EF" font-size="20" font-weight="800">—</text>
+      </svg>
+    </div>
+    <p id="loadLine" class="muted">Debt load</p>
+  </div>
+  <div class="card">
+    <div class="row between"><h3>Loans</h3><span class="muted" id="loanTotal"></span></div>
+    <ul class="list" id="loanList"></ul>
+  </div>
+  <button class="primary block" data-go="check">Run my quick check</button>
+  <div class="card" id="activity" hidden><h3>Done in the app</h3><ul class="list" id="activityList"></ul></div>
+  <p class="muted" style="text-align:center"><span id="dataNote">Synthetic demo data until you run the quick check.</span> Not financial advice. <a href="/">Desktop demo</a></p>
+</section>
+
+<!-- ============ QUICK CHECK ============ -->
+<section data-tab="check" hidden>
+  <div class="steps" id="stepBar"></div>
+  <div id="stepBody"></div>
+  <div class="row" id="stepNav">
+    <button class="ghost" id="backBtn">Back</button>
+    <button class="primary" id="nextBtn" style="flex:1">Next</button>
+  </div>
+</section>
+
+<!-- ============ PLAN (result of the check) ============ -->
+<section data-tab="plan" hidden></section>
+
+<!-- ============ CHAT ============ -->
+<section data-tab="chat" hidden>
+  <div class="row between"><h2>Ask FoydaPay</h2><span class="pill ok" id="modeBadge">…</span></div>
+  <div class="row wrap" id="chatChips"></div>
+  <div class="msgs" id="msgs"></div>
+  <form class="composer" id="chatForm">
+    <label for="q" style="position:absolute;left:-9999px">Message</label>
+    <input id="q" maxlength="1000" autocomplete="off" placeholder="Write in English, Uzbek or Russian">
+    <button class="primary" type="submit" aria-label="Send">Send</button>
+  </form>
+</section>
+
+<!-- ============ PROTECT ============ -->
+<section data-tab="protect" hidden>
+  <h2>Is this a scam?</h2>
+  <p class="muted">Paste an SMS, a Telegram message, a job offer or a loan offer. FoydaPay checks it and never pays anyone from it.</p>
+  <label class="f" for="scamText">Message
+    <textarea id="scamText" maxlength="1500" placeholder="Paste the message here"></textarea></label>
+  <div class="row wrap" id="scamSamples"></div>
+  <button class="primary block" id="scamBtn">Check message</button>
+  <div id="scamResult"></div>
+</section>
+
+</main>
+
+<nav aria-label="Main">
+  <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-go="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Check</button>
+  <button data-go="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Chat</button>
+  <button data-go="protect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>Protect</button>
+</nav>
+</div>
+
+<script>
+'use strict';
+let SID = null, STATE = null, PLAN = null;
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('ru-RU') + ' UZS';
+const digits = v => parseInt(String(v).replace(/[^\d]/g, '') || '0', 10);
+function el(tag, attrs = {}, ...kids){
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  kids.flat().forEach(k => k != null && e.append(k.nodeType ? k : document.createTextNode(k)));
+  return e;
+}
+async function api(path, body){
+  const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : 'Please check the numbers and try again.');
+  return d;
+}
+
+/* ---------- navigation ---------- */
+function go(tab){
+  document.querySelectorAll('section[data-tab]').forEach(s => s.hidden = s.dataset.tab !== tab);
+  const navTab = tab === 'plan' ? 'check' : tab;
+  document.querySelectorAll('nav button').forEach(b => b.dataset.go === navTab ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  if (tab === 'check' && PLAN) { showPlan(); return; }
+  window.scrollTo(0, 0);
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+
+/* ---------- home ---------- */
+function renderHome(st){
+  STATE = st;
+  $('hello').textContent = st.custom ? 'Your account' : 'Hi Jasur (demo)';
+  $('dataNote').textContent = st.custom ? 'A sandbox built from your quick-check answers; nothing touches a real bank.' : 'Synthetic demo data until you run the quick check.';
+  $('balance').textContent = st.card_balance;
+  const pct = st.debt_load * 100, len = Math.min(pct, 100) / 100 * 264;
+  $('ringArc').setAttribute('stroke-dasharray', `${len} 264`);
+  $('ringArc').setAttribute('stroke', pct > 50 ? '#FF8A6B' : pct > 40 ? '#F2C46B' : '#4CC495');
+  $('ringText').textContent = pct.toFixed(0) + '%';
+  $('loadLine').textContent = `${pct.toFixed(1)}% of income goes to loans · ${pct > 50 ? 'above the safe 50% level' : 'within the 50% level'}`;
+  $('loanTotal').textContent = st.loan_payments + ' / month';
+  const ll = $('loanList'); ll.replaceChildren(...st.loans.map(l => el('li', {}, el('span', { text: `${l.label} · ${(l.rate * 100).toFixed(0)}% · ${l.months} mo` }), el('span', { text: l.payment }))));
+  const acts = [...st.subscriptions.filter(s => !s.active).map(s => 'Cancelled ' + s.name),
+    ...st.booked.map(b => `Booked ${b.shifts} × ${b.title.split(' - ')[0]}`), ...st.rules, ...st.sent.map(x => `Request sent to ${x.to}`),
+    ...st.bills.filter(b => b.paid).map(b => 'Paid ' + b.name)];
+  $('activity').hidden = !acts.length;
+  $('activityList').replaceChildren(...acts.map(a => el('li', {}, el('span', { text: a }), el('span', { text: '✓' }))));
+}
+
+/* ---------- confirmation sheet ---------- */
+function sheet(content){
+  const wrap = el('div', { class: 'sheet-wrap', role: 'dialog', 'aria-modal': 'true' });
+  const s = el('div', { class: 'sheet' }, content);
+  wrap.append(s); wrap.addEventListener('click', e => { if (e.target === wrap) wrap.remove(); });
+  document.body.append(wrap); return wrap;
+}
+function confirmSheet(ev, after){
+  const ok = el('button', { class: 'primary block', text: 'Confirm' }), no = el('button', { class: 'ghost block', text: 'Cancel' });
+  const msg = el('p', { class: 'muted' });
+  const w = sheet([el('p', { class: 'tier', text: 'NEEDS YOUR CONFIRMATION' }), el('h3', { text: ev.summary }),
+    el('ul', { class: 'list' }, ev.details.map(d => el('li', {}, el('span', { text: d })))), msg, ok, no]);
+  const decide = async approve => {
+    ok.disabled = no.disabled = true;
+    try { const r = await api('/api/confirm', { session_id: SID, confirmation_id: ev.id, approve }); renderHome(r.state); msg.textContent = r.reply; after && after(r); setTimeout(() => w.remove(), 900); }
+    catch (e) { msg.textContent = e.message; }
+  };
+  ok.onclick = () => decide(true); no.onclick = () => decide(false);
+}
+async function act(tool, args, onResult){
+  const r = await api('/api/action', { session_id: SID, tool, args });
+  renderHome(r.state);
+  if (r.event && r.event.type === 'confirm') confirmSheet(r.event, () => onResult && onResult(r));
+  else onResult && onResult(r);
+  return r;
+}
+
+/* ---------- quick check ---------- */
+const DEMO = { name: 'Jasur', income: 6000000, balance: 1450000, rent: 1200000, groceries: 1100000, transport: 355000, delivery: 520000, cafes: 190000, utilities: 437000,
+  loans: [{ label: 'Bank consumer loan', lender: 'Bank A', balance: 18000000, rate: 24, months: 12 }, { label: 'Phone installment', lender: 'PhoneMart', balance: 3250000, rate: 0, months: 5 }, { label: 'Microloan', lender: 'MFO B', balance: 7500000, rate: 48, months: 12 }],
+  subscriptions: [{ key: 'music', used: true }, { key: 'video', used: true }, { key: 'video2', used: false }, { key: 'gym', used: false }],
+  weekend_days: 4, evenings: 4, skills: ['excel-basic', 'smartphone'], has_car: false };
+let P = { name: '', income: 0, balance: 0, rent: 0, groceries: 0, transport: 0, delivery: 0, cafes: 0, utilities: 0,
+  loans: [{ label: 'Bank loan', lender: '', balance: 0, rate: 24, months: 12 }], subscriptions: [], weekend_days: 2, evenings: 2, skills: ['smartphone'], has_car: false };
+let step = 0;
+const SUBS = [['music', 'Music'], ['video', 'Video'], ['video2', '2nd video'], ['gym', 'Gym'], ['cloud', 'Cloud']];
+const LOAN_TYPES = [['Bank loan', 24], ['Microloan', 48], ['Installment (nasiya)', 0], ['Car loan', 22], ['Mortgage', 18]];
+
+function money(id, label, key, help){
+  const inp = el('input', { id, inputmode: 'numeric', value: P[key] ? P[key].toLocaleString('ru-RU') : '', placeholder: '0' });
+  inp.addEventListener('input', () => { P[key] = digits(inp.value); });
+  inp.addEventListener('blur', () => { inp.value = P[key] ? P[key].toLocaleString('ru-RU') : ''; });
+  return el('label', { class: 'f', for: id }, label + (help ? ` (${help})` : ''), inp);
+}
+function counter(label, key, max){
+  const v = el('span', { class: 'num', text: String(P[key]) });
+  const set = d => { P[key] = Math.max(0, Math.min(max, P[key] + d)); v.textContent = P[key]; };
+  return el('div', { class: 'row between' }, el('span', { text: label }),
+    el('div', { class: 'row' }, el('button', { class: 'ghost', 'aria-label': 'less', text: '−', onclick: () => set(-1) }), v, el('button', { class: 'ghost', 'aria-label': 'more', text: '+', onclick: () => set(1) })));
+}
+function toggleChip(text, on, flip){
+  const b = el('button', { class: 'chip', 'aria-pressed': on ? 'true' : 'false', text });
+  b.onclick = () => { const now = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', now); flip(now); };
+  return b;
+}
+const STEPS = [
+  { title: 'Your income', render: () => [
+      el('p', { class: 'muted', text: 'All amounts are per month, in UZS. Nothing leaves this demo.' }),
+      el('button', { class: 'chip', text: 'Fill with demo user Jasur', onclick: () => { P = structuredClone(DEMO); renderStep(); } }),
+      money('inIncome', 'Monthly income after tax', 'income'),
+      el('div', { class: 'row wrap' }, [3, 5, 6, 8, 12].map(m => el('button', { class: 'chip', text: m + ' mln', onclick: () => { P.income = m * 1e6; renderStep(); } }))),
+      money('inBalance', 'Money on your card now', 'balance')],
+    ok: () => P.income >= 100000 || 'Enter your monthly income.' },
+  { title: 'Your loans', render: () => [
+      ...P.loans.map((l, i) => el('div', { class: 'card' },
+        el('div', { class: 'row between' }, el('h3', { text: `Loan ${i + 1}` }), P.loans.length > 1 ? el('button', { class: 'ghost', text: 'Remove', onclick: () => { P.loans.splice(i, 1); renderStep(); } }) : null),
+        el('div', { class: 'row wrap' }, LOAN_TYPES.map(([t, r]) => el('button', { class: 'chip', 'aria-pressed': l.label === t ? 'true' : 'false', text: t, onclick: () => { l.label = t; l.rate = r; renderStep(); } }))),
+        el('label', { class: 'f' }, 'Bank or lender', el('input', { value: l.lender, placeholder: 'e.g. Bank A', oninput: e => l.lender = e.target.value })),
+        el('label', { class: 'f' }, 'Amount still owed (UZS)', el('input', { inputmode: 'numeric', value: l.balance ? l.balance.toLocaleString('ru-RU') : '', placeholder: '0', oninput: e => l.balance = digits(e.target.value) })),
+        el('div', { class: 'grid2' },
+          el('label', { class: 'f' }, 'Interest % / year', el('input', { inputmode: 'decimal', value: String(l.rate), oninput: e => l.rate = parseFloat(e.target.value.replace(',', '.')) || 0 })),
+          el('label', { class: 'f' }, 'Months left', el('input', { inputmode: 'numeric', value: String(l.months), oninput: e => l.months = digits(e.target.value) }))))),
+      P.loans.length < 5 ? el('button', { class: 'ghost block', text: '+ Add another loan', onclick: () => { P.loans.push({ label: 'Microloan', lender: '', balance: 0, rate: 48, months: 12 }); renderStep(); } }) : null],
+    ok: () => P.loans.every(l => l.balance >= 100000 && l.months >= 1) || 'Each loan needs the amount owed (at least 100 000) and months left.' },
+  { title: 'Monthly spending', render: () => [
+      el('div', { class: 'grid2' }, money('inRent', 'Rent', 'rent'), money('inUtil', 'Utilities', 'utilities'),
+        money('inGroc', 'Groceries', 'groceries'), money('inTrans', 'Transport', 'transport'),
+        money('inDeliv', 'Food delivery', 'delivery'), money('inCafe', 'Cafes', 'cafes')),
+      el('h3', { text: 'Subscriptions' }), el('p', { class: 'muted', text: 'Tap the ones you pay for. Tap again to mark one you no longer use.' }),
+      el('div', { class: 'row wrap' }, SUBS.map(([k, name]) => {
+        const s = P.subscriptions.find(x => x.key === k);
+        const label = !s ? name : s.used ? name + ' · in use' : name + ' · not used';
+        return el('button', { class: 'chip', 'aria-pressed': s ? 'true' : 'false', text: label, onclick: () => {
+          if (!s) P.subscriptions.push({ key: k, used: true }); else if (s.used) s.used = false; else P.subscriptions = P.subscriptions.filter(x => x.key !== k);
+          renderStep(); } });
+      }))],
+    ok: () => true },
+  { title: 'Time for side jobs', render: () => [
+      el('p', { class: 'muted', text: 'Only if you want extra income. FoydaPay suggests checked jobs and rejects offers that ask you to pay first.' }),
+      el('div', { class: 'card' }, counter('Free weekend days per month', 'weekend_days', 8), counter('Free evenings per month', 'evenings', 20)),
+      el('div', { class: 'row wrap' },
+        toggleChip('I know Excel', P.skills.includes('excel-basic'), on => { P.skills = on ? [...new Set([...P.skills, 'excel-basic'])] : P.skills.filter(x => x !== 'excel-basic'); }),
+        toggleChip('I have a car', P.has_car, on => { P.has_car = on; }))],
+    ok: () => true },
+  { title: 'Check and get your plan', render: () => {
+      const spend = P.rent + P.groceries + P.transport + P.delivery + P.cafes + P.utilities;
+      return [el('ul', { class: 'list card' },
+        el('li', {}, el('span', { text: 'Income' }), el('span', { text: fmt(P.income) })),
+        el('li', {}, el('span', { text: `Loans (${P.loans.length})` }), el('span', { text: fmt(P.loans.reduce((a, l) => a + l.balance, 0)) + ' owed' })),
+        el('li', {}, el('span', { text: 'Spending' }), el('span', { text: fmt(spend) + ' / month' })),
+        el('li', {}, el('span', { text: 'Subscriptions' }), el('span', { text: String(P.subscriptions.length) })),
+        el('li', {}, el('span', { text: 'Free time' }), el('span', { text: `${P.weekend_days} weekend days, ${P.evenings} evenings` }))),
+        el('p', { class: 'muted', text: 'FoydaPay builds a sandbox account from these numbers. Nothing is paid or sent without your confirmation.' })];
+    }, ok: () => true },
+];
+function renderStep(){
+  $('stepBar').replaceChildren(...STEPS.map((_, i) => el('i', { class: i <= step ? 'on' : '' })));
+  $('stepBody').replaceChildren(el('div', { class: 'card' }, el('h2', { text: STEPS[step].title }), STEPS[step].render()), el('p', { class: 'muted', id: 'stepErr', role: 'alert' }));
+  $('backBtn').hidden = step === 0;
+  $('nextBtn').textContent = step === STEPS.length - 1 ? 'Get my plan' : 'Next';
+}
+$('backBtn').onclick = () => { step = Math.max(0, step - 1); renderStep(); };
+$('nextBtn').onclick = async () => {
+  const ok = STEPS[step].ok();
+  if (ok !== true) { $('stepErr').textContent = ok; return; }
+  if (step < STEPS.length - 1) { step++; renderStep(); window.scrollTo(0, 0); return; }
+  $('nextBtn').disabled = true; $('nextBtn').textContent = 'Building your plan…';
+  try {
+    const r = await api('/api/profile', { session_id: SID, ...P, name: P.name || 'You' });
+    PLAN = r.plan; renderHome(r.state); showPlan();
+  } catch (e) { $('stepErr').textContent = e.message; }
+  $('nextBtn').disabled = false; $('nextBtn').textContent = 'Get my plan';
+};
+
+/* ---------- plan ---------- */
+function showPlan(){
+  const p = PLAN, sec = document.querySelector('section[data-tab="plan"]');
+  document.querySelectorAll('section[data-tab]').forEach(s => s.hidden = s !== sec);
+  const short = p.shortfall > 0;
+  const cutsSubs = p.cut.items.filter(c => c.subscription_id).map(c => c.subscription_id);
+  const n = p.negotiate;
+  sec.replaceChildren(
+    el('div', { class: 'row between' }, el('h2', { text: 'Your plan' }), el('button', { class: 'ghost', text: 'Edit answers', onclick: () => { PLAN = null; step = 0; go('check'); renderStep(); } })),
+    el('div', { class: 'banner ' + (short ? 'bad' : 'ok') },
+      el('p', { class: 'muted', text: short ? 'Next month you are short' : 'Next month you have a buffer of' }),
+      el('p', { class: 'big', text: fmt(Math.abs(p.shortfall)) }),
+      el('p', { text: `Loans take ${(p.debt_load * 100).toFixed(1)}% of income (${fmt(p.loan_payments)} a month). ${p.debt_load > 0.5 ? 'That is above the 50% level.' : ''}` })),
+    el('div', { class: 'card' },
+      el('div', { class: 'row between' }, el('h3', { text: '1 · Cut' }), el('span', { class: 'pill ok', text: '+' + fmt(p.cut.total) })),
+      p.cut.items.length ? el('ul', { class: 'list' }, p.cut.items.map(c => el('li', {}, el('span', { text: c.what }), el('span', { text: fmt(c.saves) })))) : el('p', { class: 'muted', text: 'No easy cuts found.' }),
+      cutsSubs.length ? el('button', { class: 'block', text: 'Cancel unused subscriptions', onclick: () => act('cancel_subscriptions', { subscription_ids: cutsSubs }) }) : null),
+    el('div', { class: 'card' },
+      el('div', { class: 'row between' }, el('h3', { text: '2 · Earn' }), el('span', { class: 'pill ok', text: '+' + fmt(p.earn.total) })),
+      p.earn.plan.length ? el('ul', { class: 'list' }, p.earn.plan.map(j => el('li', {}, el('span', { text: `${j.shifts} × ${j.title}` }), el('span', { text: fmt(j.earns) })))) : el('p', { class: 'muted', text: p.remaining_after_cuts > 0 ? 'Add free days in the check to get side jobs.' : 'Not needed: cuts already cover the gap.' }),
+      p.earn.rejected.length ? el('details', {}, el('summary', { class: 'muted', text: `${p.earn.rejected.length} offers rejected` }),
+        el('ul', { class: 'list' }, p.earn.rejected.map(r => el('li', {}, el('span', { text: `${r.title.split(' - ')[0]}: ${r.reason}` }))))) : null,
+      p.earn.plan.length ? el('button', { class: 'block', text: 'Book these jobs', onclick: () => act('book_side_jobs', { bookings: p.earn.plan.map(j => ({ gig_id: j.gig_id, shifts: j.shifts })) }) }) : null),
+    el('div', { class: 'card' },
+      el('div', { class: 'row between' }, el('h3', { text: '3 · Negotiate (optional)' }), el('span', { class: 'pill warn', text: '−' + fmt(n.saves_per_month) + '/mo' })),
+      el('p', { text: `Ask ${n.lender} to extend the loan to ${n.months} months. Your debt load drops to ${(n.new_debt_load * 100).toFixed(1)}%, but you pay about ${fmt(n.extra_interest_total)} more interest in total.` }),
+      el('button', { class: 'block', text: 'Draft the request', onclick: () => act('draft_restructuring_request', { months: n.months }, r => {
+        const res = r.result.result;
+        sheet([el('h3', { text: 'Draft request' }), el('pre', { text: res.letter }), el('p', { class: 'muted', text: res.disclaimer }),
+          el('button', { class: 'primary block', text: 'Send to ' + n.lender, onclick: e => { e.target.closest('.sheet-wrap').remove(); act('send_restructuring_request', { months: n.months }); } })]);
+      }) })),
+    el('div', { class: 'banner ' + (p.remaining_after_side_jobs <= 0 ? 'ok' : 'warn') },
+      el('p', { text: p.remaining_after_side_jobs <= 0 ? `Cut + earn close the gap with ${fmt(-p.remaining_after_side_jobs)} to spare.` : `Still missing ${fmt(p.remaining_after_side_jobs)}. Consider the restructuring request.` })),
+    el('button', { class: 'ghost block', text: 'Ask FoydaPay about my plan', onclick: () => { go('chat'); $('q').value = 'Explain my plan and what I should do first.'; $('q').focus(); } }));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- chat ---------- */
+function richText(target, text){
+  text.split('\n').forEach((line, i) => {
+    if (i) target.append('\n');
+    line = line.replace(/^(\s*)[*-]\s+/, '$1• ').replace(/`/g, '');
+    line.split(/(\*\*[^*]+\*\*)/g).forEach(part => {
+      if (/^\*\*[^*]+\*\*$/.test(part)) target.append(el('b', { text: part.slice(2, -2) }));
+      else if (part) target.append(part.replace(/\*+/g, ''));
+    });
+  });
+}
+function addMsg(who, text){ const m = el('div', { class: 'msg ' + who }); who === 'agent' ? richText(m, text) : m.textContent = text; $('msgs').append(m); m.scrollIntoView({ block: 'end' }); }
+async function sendChat(text){
+  if (!text.trim()) return;
+  addMsg('user', text); const t = el('div', { class: 'typing', text: 'FoydaPay is thinking…' }); $('msgs').append(t);
+  try { const r = await api('/api/chat', { session_id: SID, message: text }); t.remove(); addMsg('agent', r.reply); renderHome(r.state);
+    (r.events || []).forEach(ev => ev.type === 'confirm' && confirmSheet(ev, rr => addMsg('agent', rr.reply))); }
+  catch (e) { t.remove(); addMsg('agent', e.message); }
+}
+$('chatForm').addEventListener('submit', e => { e.preventDefault(); const v = $('q').value; $('q').value = ''; sendChat(v); });
+['Where does my money go?', "I can't pay my loans this month", 'Analyse my bills', "Oyligim kechikdi, kreditni to'lay olmayman"]
+  .forEach(t => $('chatChips').append(el('button', { class: 'chip', text: t, onclick: () => sendChat(t) })));
+
+/* ---------- protect ---------- */
+const SAMPLES = [
+  ['Fake collector', 'Debt collection department. Transfer 2 100 000 UZS to card 8600 3141 5926 5358 today, otherwise we file to court tomorrow.'],
+  ['Job with a fee', 'Telegram job offer: Warehouse picker, 400 000 per shift. Pay 300 000 for uniform and registration fee first.'],
+  ['Instant loan', 'Approved! 5 000 000 UZS microloan in 5 minutes, no documents. Close your old loans today!']];
+SAMPLES.forEach(([l, t]) => $('scamSamples').append(el('button', { class: 'chip', text: l, onclick: () => { $('scamText').value = t; } })));
+$('scamBtn').onclick = async () => {
+  const text = $('scamText').value.trim(); if (!text) return;
+  $('scamBtn').disabled = true;
+  try {
+    const r = await api('/api/action', { session_id: SID, tool: 'analyze_message', args: { text } });
+    const res = r.result.result, cls = { high: 'bad', medium: 'warn', low: 'ok' }[res.risk];
+    const title = { high: 'High risk — likely a scam', medium: 'Be careful — one warning sign', low: 'No clear warning signs' }[res.risk];
+    const kind = { collector: 'Looks like a fake debt collector.', job: 'Looks like a fake job offer.', loan_offer: 'Looks like a predatory loan offer.', other: '' }[res.kind];
+    $('scamResult').replaceChildren(el('div', { class: 'banner ' + cls }, el('h3', { text: title }), kind ? el('p', { text: kind }) : null),
+      res.reasons.length ? el('div', { class: 'card' }, el('h3', { text: 'Why' }), el('ul', { class: 'list' }, res.reasons.map(x => el('li', {}, el('span', { text: x }))))) : null,
+      el('div', { class: 'card' }, el('h3', { text: 'What to do' }), el('ul', { class: 'list' },
+        el('li', {}, el('span', { text: 'Never pay to a personal card number or share SMS codes.' })),
+        el('li', {}, el('span', { text: "Call your lender using the number in its official app or website." })),
+        el('li', {}, el('span', { text: 'Already paid? Call your bank now to block the card.' })))));
+  } catch (e) { $('scamResult').replaceChildren(el('p', { class: 'muted', text: e.message })); }
+  $('scamBtn').disabled = false;
+};
+
+/* ---------- start ---------- */
+(async () => {
+  renderStep();
+  try {
+    const h = await api('/healthz');
+    $('modeBadge').textContent = h.mode === 'llm' ? 'AI agent' : 'Offline mode';
+    if (h.mode !== 'llm') $('modeBadge').className = 'pill warn';
+    const r = await api('/api/session', {}); SID = r.session_id; renderHome(r.state);
+    addMsg('agent', 'Hi! I can see your sandbox account. Ask me about your budget, bills or loans. I act only after you confirm, and I never send money to new cards.');
+  } catch (e) { $('hello').textContent = 'Could not connect: ' + e.message; }
+})();
+</script>
+</body>
+</html>
